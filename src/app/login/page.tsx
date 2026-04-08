@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup, signInWithRedirect, signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
@@ -10,6 +10,8 @@ export default function LoginPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<"google" | "email">("google");
+  const [mode, setMode] = useState<"login" | "cadastro">("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,12 +44,21 @@ export default function LoginPage() {
     setSigning(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (mode === "cadastro") {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
       router.replace("/");
     } catch (e: unknown) {
       const code = (e as { code?: string }).code;
       if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
         setError("Email ou senha incorretos.");
+      } else if (code === "auth/email-already-in-use") {
+        setError("Este email já está cadastrado. Faça login.");
+      } else if (code === "auth/weak-password") {
+        setError("Senha fraca. Use pelo menos 6 caracteres.");
       } else {
         setError("Erro ao entrar. Tente novamente.");
       }
@@ -115,6 +126,35 @@ export default function LoginPage() {
           </button>
         ) : (
           <form onSubmit={handleEmailLogin} className="w-full flex flex-col gap-3">
+            {/* Login / Cadastro toggle */}
+            <div className="flex gap-4 justify-center text-sm mb-1">
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setError(""); }}
+                className={`font-medium transition ${mode === "login" ? "text-red-900 underline underline-offset-2" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                Entrar
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                type="button"
+                onClick={() => { setMode("cadastro"); setError(""); }}
+                className={`font-medium transition ${mode === "cadastro" ? "text-red-900 underline underline-offset-2" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                Criar conta
+              </button>
+            </div>
+
+            {mode === "cadastro" && (
+              <input
+                type="text"
+                placeholder="Nome completo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={signing}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+              />
+            )}
             <input
               type="email"
               placeholder="Email"
@@ -126,7 +166,7 @@ export default function LoginPage() {
             />
             <input
               type="password"
-              placeholder="Senha"
+              placeholder={mode === "cadastro" ? "Senha (mín. 6 caracteres)" : "Senha"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -138,7 +178,7 @@ export default function LoginPage() {
               disabled={signing || !email || !password}
               className="w-full bg-red-900 hover:bg-red-800 text-white py-2.5 rounded-xl text-sm font-medium transition disabled:opacity-50"
             >
-              {signing ? "Entrando..." : "Entrar"}
+              {signing ? (mode === "cadastro" ? "Criando conta..." : "Entrando...") : (mode === "cadastro" ? "Criar conta" : "Entrar")}
             </button>
           </form>
         )}
