@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, getRedirectResult, User } from "firebase/auth";
 import { auth } from "./firebase";
 
 interface AuthContextValue {
@@ -16,6 +16,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Captura resultado do signInWithRedirect (fluxo mobile)
+    getRedirectResult(auth).catch(() => {});
+
     return onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);

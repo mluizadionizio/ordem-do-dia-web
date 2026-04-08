@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
@@ -20,12 +20,17 @@ export default function LoginPage() {
     setSigning(true);
     setError("");
     try {
-      await signInWithPopup(auth, googleProvider);
-      router.replace("/");
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Mobile: redirect evita bloqueio de popup
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        await signInWithPopup(auth, googleProvider);
+        router.replace("/");
+      }
     } catch (e: unknown) {
       setError("Erro ao entrar com Google. Tente novamente.");
       console.error(e);
-    } finally {
       setSigning(false);
     }
   }
