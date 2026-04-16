@@ -81,8 +81,8 @@ export default function LoginPage() {
             <span className="text-white text-2xl font-black tracking-tight">LC</span>
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-900">Ordem do Dia</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Gabinete da Vereadora Liana Cirne</p>
+            <h1 className="text-xl font-bold text-gray-900">Sistema Gabinete</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Vereadora Liana Cirne</p>
           </div>
         </div>
 
@@ -126,7 +126,6 @@ export default function LoginPage() {
           </button>
         ) : (
           <form onSubmit={handleEmailLogin} className="w-full flex flex-col gap-3">
-            {/* Login / Cadastro toggle */}
             <div className="flex gap-4 justify-center text-sm mb-1">
               <button
                 type="button"

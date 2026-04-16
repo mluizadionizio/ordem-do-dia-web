@@ -6,18 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 import { createSession } from "@/lib/firestore";
 import { VotingItem, VotingSession } from "@/lib/types";
 import { parseLocalAgenda } from "@/lib/local-parser";
-import AuthGuard from "@/components/AuthGuard";
-import Navbar from "@/components/Navbar";
 
 export default function NovaPage() {
-  return (
-    <AuthGuard>
-      <NovaSessionPage />
-    </AuthGuard>
-  );
-}
-
-function NovaSessionPage() {
   const { user } = useAuth();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -73,7 +63,6 @@ function NovaSessionPage() {
     setStatusMsg("Analisando localmente...");
 
     try {
-      // Pequeno yield para o browser atualizar a UI
       await new Promise((r) => setTimeout(r, 50));
 
       const { sessionTitle, items: parsed } = parseLocalAgenda(text);
@@ -137,7 +126,6 @@ function NovaSessionPage() {
     setStatusMsg("Iniciando análise...");
 
     try {
-      // Chama a API com streaming — sem timeout, resposta chega em tempo real
       const res = await fetch("/api/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -149,7 +137,6 @@ function NovaSessionPage() {
         throw new Error(body.error ?? "Erro ao conectar com a API");
       }
 
-      // Lê o stream de Server-Sent Events
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -160,7 +147,6 @@ function NovaSessionPage() {
 
         buffer += decoder.decode(value, { stream: true });
 
-        // Processa linhas SSE completas
         const parts = buffer.split("\n\n");
         buffer = parts.pop() ?? "";
 
@@ -170,17 +156,9 @@ function NovaSessionPage() {
 
           const data = JSON.parse(line.slice(6));
 
-          // Atualiza mensagem de status em tempo real
-          if (data.status) {
-            setStatusMsg(data.status);
-          }
+          if (data.status) setStatusMsg(data.status);
+          if (data.error) throw new Error(data.error);
 
-          // Erro do servidor
-          if (data.error) {
-            throw new Error(data.error);
-          }
-
-          // Resultado final chegou
           if (data.done) {
             if (!data.items || data.items.length === 0) {
               setError("Nenhum item encontrado. Verifique o texto da pauta.");
@@ -237,9 +215,7 @@ function NovaSessionPage() {
   const busy = status !== "idle";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-1 py-8 px-4">
+    <div className="py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Nova Sessão</h2>
 
@@ -323,7 +299,6 @@ function NovaSessionPage() {
           <p className="text-xs text-gray-400">✨ IA — mais preciso, requer API</p>
         </div>
       </div>
-      </main>
     </div>
   );
 }

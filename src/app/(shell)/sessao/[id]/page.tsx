@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { listenToItems, swapItemIndexes } from "@/lib/firestore";
 import { VotingItem } from "@/lib/types";
-import AuthGuard from "@/components/AuthGuard";
-import Navbar from "@/components/Navbar";
 import ItemCard from "@/components/ItemCard";
 import ItemModal from "@/components/ItemModal";
 import PrintView from "@/components/PrintView";
@@ -16,14 +14,6 @@ import AddItemModal from "@/components/AddItemModal";
 type Filter = "Todos" | "Pendentes" | "A Favor" | "Contra" | "Abster" | "Aparte" | "Destaque" | "Liana Cirne";
 
 export default function SessionPage() {
-  return (
-    <AuthGuard>
-      <SessionDetail />
-    </AuthGuard>
-  );
-}
-
-function SessionDetail() {
   const params = useParams();
   const sessionId = params.id as string;
   const { user } = useAuth();
@@ -51,7 +41,6 @@ function SessionDetail() {
   }, [items]);
 
   const filtered = useMemo(() => {
-    // Em modo reordenamento, sempre mostra todos (filtro desativado)
     if (reordering) return items;
     switch (filter) {
       case "Pendentes":    return items.filter((i) => !i.vote && !i.fazerAparte && !i.fazerDestaque);
@@ -96,9 +85,7 @@ function SessionDetail() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-1 py-6 px-4">
+    <div className="py-6 px-4">
       <div className="max-w-3xl mx-auto">
 
         {/* Top bar */}
@@ -163,7 +150,7 @@ function SessionDetail() {
           </div>
         </div>
 
-        {/* Filters (hidden in reorder mode) */}
+        {/* Filters */}
         {!reordering && (
           <div className="flex gap-2 overflow-x-auto pb-2 mb-4 [-ms-overflow-style:none] [scrollbar-width:none]">
             {filters.map((f) => (
@@ -231,7 +218,6 @@ function SessionDetail() {
           </div>
         )}
       </div>
-      </main>
 
       {selectedItem && !reordering && (
         <ItemModal

@@ -6,8 +6,8 @@ import { AuthProvider } from "@/lib/auth-context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Ordem do Dia — Gabinete Liana Cirne",
-  description: "Sistema de orientação de votos para o departamento jurídico",
+  title: "Sistema Gabinete Liana Cirne",
+  description: "Plataforma de gestão do gabinete da vereadora Liana Cirne",
 };
 
 export default function RootLayout({
