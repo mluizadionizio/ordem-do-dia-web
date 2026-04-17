@@ -79,15 +79,19 @@ export default function ImportContactsModal({ onClose }: Props) {
     const BATCH = 20;
     let done = 0;
 
-    for (let i = 0; i < contacts.length; i += BATCH) {
-      const batch = contacts.slice(i, i + BATCH);
-      await Promise.all(batch.map((c) => createContact(c, user)));
-      done += batch.length;
-      setProgress(Math.round((done / contacts.length) * 100));
+    try {
+      for (let i = 0; i < contacts.length; i += BATCH) {
+        const batch = contacts.slice(i, i + BATCH);
+        await Promise.all(batch.map((c) => createContact(c, user)));
+        done += batch.length;
+        setProgress(Math.round((done / contacts.length) * 100));
+      }
+      setDone(true);
+    } catch (err) {
+      setError(`Erro ao importar contatos: ${err instanceof Error ? err.message : "tente novamente."}`);
+    } finally {
+      setImporting(false);
     }
-
-    setImporting(false);
-    setDone(true);
   }
 
   const previewRows = rows.slice(0, 5);
