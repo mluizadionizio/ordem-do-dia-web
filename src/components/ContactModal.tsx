@@ -120,7 +120,8 @@ export default function ContactModal({ contact, allTags, onClose }: Props) {
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Erro ao salvar contato. Tente novamente.");
+      const code = (err as { code?: string })?.code;
+      setError(`Erro ao salvar contato [${code ?? "desconhecido"}]: ${err instanceof Error ? err.message : "tente novamente."}`);
     } finally {
       setSaving(false);
     }
