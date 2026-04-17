@@ -50,12 +50,16 @@ export function listenToContacts(
   });
 }
 
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+}
+
 export async function createContact(
   data: Omit<Contact, "id" | "createdAt" | "createdBy">,
   user: User
 ): Promise<string> {
   const ref = await addDoc(collection(db, "contacts"), {
-    ...data,
+    ...stripUndefined(data as Record<string, unknown>),
     createdAt: serverTimestamp(),
     createdBy: user.email ?? user.uid,
   });
@@ -68,7 +72,7 @@ export async function updateContact(
   user: User
 ): Promise<void> {
   await updateDoc(doc(db, "contacts", id), {
-    ...updates,
+    ...stripUndefined(updates as Record<string, unknown>),
     updatedAt: serverTimestamp(),
     updatedBy: user.email ?? user.uid,
   });
