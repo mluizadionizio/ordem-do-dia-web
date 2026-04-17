@@ -2,6 +2,9 @@ export type VoteOption = "A Favor" | "Contra" | "Abster" | null;
 
 export type ContactCategory =
   | "Cidadão"
+  | "Eleitor"
+  | "Reitor"
+  | "Parlamentar"
   | "Entidade"
   | "Parceiro"
   | "Institucional"
@@ -27,6 +30,9 @@ export interface Contact {
 
 export const CONTACT_CATEGORIES: ContactCategory[] = [
   "Cidadão",
+  "Eleitor",
+  "Reitor",
+  "Parlamentar",
   "Entidade",
   "Parceiro",
   "Institucional",
