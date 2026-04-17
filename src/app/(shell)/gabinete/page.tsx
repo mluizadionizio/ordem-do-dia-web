@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Contact, ContactCategory, PRESET_TAGS } from "@/lib/types";
-import { listenToContacts, deleteContact } from "@/lib/contacts-firestore";
+import { Contact, ContactCategory, CONTACT_CATEGORIES, PRESET_TAGS } from "@/lib/types";
+import { listenToContacts, listenToCategories, deleteContact } from "@/lib/contacts-firestore";
 import { exportContactsToCSV, exportContactsToXLSX } from "@/lib/export";
 import ContactCard from "@/components/ContactCard";
 import ContactFilterPanel from "@/components/ContactFilterPanel";
@@ -12,6 +12,7 @@ import ImportContactsModal from "@/components/ImportContactsModal";
 export default function GabineteVirtualPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
   // Filter state
   const [searchText, setSearchText] = useState("");
@@ -30,8 +31,14 @@ export default function GabineteVirtualPage() {
       setContacts(data);
       setLoading(false);
     });
-    return () => unsub();
+    const unsubCat = listenToCategories(setCustomCategories);
+    return () => { unsub(); unsubCat(); };
   }, []);
+
+  const allCategories = useMemo(
+    () => Array.from(new Set([...CONTACT_CATEGORIES, ...customCategories])),
+    [customCategories]
+  );
 
   const allTags = useMemo(
     () =>
@@ -178,6 +185,7 @@ export default function GabineteVirtualPage() {
         <aside className="hidden md:block w-56 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-4">
           <ContactFilterPanel
             contacts={contacts}
+            allCategories={allCategories}
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
             selectedTags={selectedTags}
@@ -197,6 +205,7 @@ export default function GabineteVirtualPage() {
               <div className="md:hidden bg-white rounded-xl border border-gray-200 p-4 mb-4">
                 <ContactFilterPanel
                   contacts={contacts}
+                  allCategories={allCategories}
                   selectedCategories={selectedCategories}
                   setSelectedCategories={setSelectedCategories}
                   selectedTags={selectedTags}
@@ -283,6 +292,7 @@ export default function GabineteVirtualPage() {
         <ContactModal
           contact={editingContact}
           allTags={allTags}
+          allCategories={allCategories}
           onClose={() => { setModalOpen(false); setEditingContact(undefined); }}
         />
       )}

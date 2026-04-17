@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Contact, ContactCategory, CONTACT_CATEGORIES, PRESET_TAGS } from "@/lib/types";
-import { createContact, updateContact } from "@/lib/contacts-firestore";
+import { createContact, updateContact, addCustomCategory } from "@/lib/contacts-firestore";
 import { useAuth } from "@/lib/auth-context";
 
 interface Props {
   contact?: Contact;
   allTags: string[];
+  allCategories: string[];
   onClose: () => void;
 }
 
@@ -24,11 +25,13 @@ const EMPTY_FORM = {
   notes: "",
 };
 
-export default function ContactModal({ contact, allTags, onClose }: Props) {
+export default function ContactModal({ contact, allTags, allCategories, onClose }: Props) {
   const { user } = useAuth();
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [newCatInput, setNewCatInput] = useState("");
+  const [showNewCat, setShowNewCat] = useState(false);
 
   // Tag autocomplete state
   const [tagInput, setTagInput] = useState("");
@@ -179,16 +182,61 @@ export default function ContactModal({ contact, allTags, onClose }: Props) {
           {/* Category */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Categoria *</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as ContactCategory }))}
-              disabled={saving}
-              className={field}
-            >
-              {CONTACT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            {showNewCat ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCatInput}
+                  onChange={(e) => setNewCatInput(e.target.value)}
+                  placeholder="Nome da nova categoria"
+                  className={field}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  disabled={!newCatInput.trim()}
+                  onClick={async () => {
+                    const name = newCatInput.trim();
+                    if (!name) return;
+                    await addCustomCategory(name);
+                    setForm((f) => ({ ...f, category: name as ContactCategory }));
+                    setNewCatInput("");
+                    setShowNewCat(false);
+                  }}
+                  className="px-3 py-2 bg-red-900 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                >
+                  OK
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewCat(false); setNewCatInput(""); }}
+                  className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as ContactCategory }))}
+                  disabled={saving}
+                  className={`${field} flex-1`}
+                >
+                  {allCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCat(true)}
+                  title="Criar nova categoria"
+                  className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-500 hover:text-red-700 hover:border-red-300 transition"
+                >
+                  + Nova
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Phone + Email */}

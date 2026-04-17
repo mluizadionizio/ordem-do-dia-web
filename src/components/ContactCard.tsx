@@ -2,13 +2,17 @@
 
 import { Contact } from "@/lib/types";
 
-const CATEGORY_STYLES: Record<Contact["category"], string> = {
+const CATEGORY_STYLES: Record<string, string> = {
   Cidadão:       "bg-blue-100 text-blue-800",
+  Eleitor:       "bg-sky-100 text-sky-800",
+  Reitor:        "bg-indigo-100 text-indigo-800",
+  Parlamentar:   "bg-rose-100 text-rose-800",
   Entidade:      "bg-purple-100 text-purple-800",
   Parceiro:      "bg-green-100 text-green-800",
   Institucional: "bg-amber-100 text-amber-800",
   Outro:         "bg-gray-100 text-gray-600",
 };
+const DEFAULT_STYLE = "bg-gray-100 text-gray-700";
 
 interface Props {
   contact: Contact;
@@ -24,7 +28,7 @@ export default function ContactCard({ contact, onEdit, onDelete }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight">{contact.name}</h3>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[contact.category]}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[contact.category] ?? DEFAULT_STYLE}`}>
               {contact.category}
             </span>
           </div>

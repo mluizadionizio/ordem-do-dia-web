@@ -1,14 +1,6 @@
 export type VoteOption = "A Favor" | "Contra" | "Abster" | null;
 
-export type ContactCategory =
-  | "Cidadão"
-  | "Eleitor"
-  | "Reitor"
-  | "Parlamentar"
-  | "Entidade"
-  | "Parceiro"
-  | "Institucional"
-  | "Outro";
+export type ContactCategory = string;
 
 export interface Contact {
   id: string;

@@ -4,11 +4,13 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
   onSnapshot,
   getDocs,
   query,
   orderBy,
   serverTimestamp,
+  arrayUnion,
   Timestamp,
 } from "firebase/firestore";
 import { User } from "firebase/auth";
@@ -80,6 +82,16 @@ export async function updateContact(
 
 export async function deleteContact(id: string): Promise<void> {
   await deleteDoc(doc(db, "contacts", id));
+}
+
+export function listenToCategories(onChange: (categories: string[]) => void): () => void {
+  return onSnapshot(doc(db, "settings", "categories"), (snap) => {
+    onChange((snap.data()?.custom as string[]) ?? []);
+  });
+}
+
+export async function addCustomCategory(name: string): Promise<void> {
+  await setDoc(doc(db, "settings", "categories"), { custom: arrayUnion(name) }, { merge: true });
 }
 
 export async function getContactsSnapshot(): Promise<Contact[]> {

@@ -1,9 +1,10 @@
 "use client";
 
-import { Contact, ContactCategory, CONTACT_CATEGORIES, PRESET_TAGS } from "@/lib/types";
+import { Contact, ContactCategory, PRESET_TAGS } from "@/lib/types";
 
 interface Props {
   contacts: Contact[];
+  allCategories: string[];
   selectedCategories: ContactCategory[];
   setSelectedCategories: (v: ContactCategory[]) => void;
   selectedTags: string[];
@@ -15,6 +16,7 @@ interface Props {
 
 export default function ContactFilterPanel({
   contacts,
+  allCategories,
   selectedCategories,
   setSelectedCategories,
   selectedTags,
@@ -68,7 +70,7 @@ export default function ContactFilterPanel({
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</p>
         <div className="space-y-1">
-          {CONTACT_CATEGORIES.map((cat) => (
+          {allCategories.map((cat) => (
             <label key={cat} className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
