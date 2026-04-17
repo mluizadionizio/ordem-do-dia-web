@@ -77,7 +77,7 @@ export default function ImportContactsModal({ onClose }: Props) {
       .map(rowToContact)
       .filter((c) => c.name.trim());
 
-    const BATCH = 20;
+    const BATCH = 5;
     let done = 0;
 
     try {
@@ -89,7 +89,8 @@ export default function ImportContactsModal({ onClose }: Props) {
           throw (failed[0] as PromiseRejectedResult).reason;
         }
         done += batch.length;
-        setProgress(Math.round((done / contacts.length) * 100));
+        setProgress(done);
+        await new Promise((r) => setTimeout(r, 50));
       }
       setDone(true);
     } catch (err) {
@@ -220,12 +221,12 @@ export default function ImportContactsModal({ onClose }: Props) {
                     <div>
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Importando...</span>
-                        <span>{progress}%</span>
+                        <span>{progress} / {validCount}</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
                         <div
                           className="bg-red-800 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
+                          style={{ width: `${Math.round((progress / validCount) * 100)}%` }}
                         />
                       </div>
                     </div>
