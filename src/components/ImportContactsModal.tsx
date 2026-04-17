@@ -61,7 +61,8 @@ export default function ImportContactsModal({ onClose }: Props) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const parsed = XLSX.utils.sheet_to_json<RawRow>(ws, { defval: "" });
       setRows(parsed);
-    } catch {
+    } catch (err) {
+      console.error("[ImportContacts] falha ao ler arquivo:", err);
       setError("Erro ao ler o arquivo. Verifique se é um CSV válido.");
     }
   }
@@ -82,13 +83,25 @@ export default function ImportContactsModal({ onClose }: Props) {
     try {
       for (let i = 0; i < contacts.length; i += BATCH) {
         const batch = contacts.slice(i, i + BATCH);
-        await Promise.all(batch.map((c) => createContact(c, user)));
+        const results = await Promise.allSettled(batch.map((c) => createContact(c, user)));
+        const failed = results.filter((r) => r.status === "rejected");
+        if (failed.length > 0) {
+          throw (failed[0] as PromiseRejectedResult).reason;
+        }
         done += batch.length;
         setProgress(Math.round((done / contacts.length) * 100));
       }
       setDone(true);
     } catch (err) {
-      setError(`Erro ao importar contatos: ${err instanceof Error ? err.message : "tente novamente."}`);
+      console.error("[ImportContacts] falha ao salvar no Firestore:", err);
+      const code = (err as { code?: string })?.code;
+      const msg =
+        code === "permission-denied"
+          ? "Sem permissão para salvar no banco. Verifique as regras do Firestore."
+          : err instanceof Error
+          ? err.message
+          : "tente novamente.";
+      setError(`Erro ao importar contatos: ${msg}`);
     } finally {
       setImporting(false);
     }

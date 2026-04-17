@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider } from "firebase/auth";
+import { initializeAuth, getAuth, indexedDBLocalPersistence, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,8 +15,12 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 // indexedDBLocalPersistence evita o erro "missing initial state" em Safari/iOS
 // onde o sessionStorage é bloqueado por storage partitioning
-export const auth = initializeAuth(app, {
-  persistence: indexedDBLocalPersistence,
-});
+let _auth;
+try {
+  _auth = initializeAuth(app, { persistence: indexedDBLocalPersistence });
+} catch {
+  _auth = getAuth(app);
+}
+export const auth = _auth;
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
