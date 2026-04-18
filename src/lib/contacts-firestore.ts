@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   arrayUnion,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { User } from "firebase/auth";
 import { db } from "./firebase";
@@ -92,6 +93,44 @@ export function listenToCategories(onChange: (categories: string[]) => void): ()
 
 export async function addCustomCategory(name: string): Promise<void> {
   await setDoc(doc(db, "settings", "categories"), { custom: arrayUnion(name) }, { merge: true });
+}
+
+const BATCH_SIZE = 499;
+
+export async function bulkDeleteContacts(ids: string[]): Promise<void> {
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    ids.slice(i, i + BATCH_SIZE).forEach((id) => batch.delete(doc(db, "contacts", id)));
+    await batch.commit();
+  }
+}
+
+export async function bulkAddTags(ids: string[], tags: string[], user: User): Promise<void> {
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    ids.slice(i, i + BATCH_SIZE).forEach((id) =>
+      batch.update(doc(db, "contacts", id), {
+        tags: arrayUnion(...tags),
+        updatedAt: serverTimestamp(),
+        updatedBy: user.email ?? user.uid,
+      })
+    );
+    await batch.commit();
+  }
+}
+
+export async function bulkSetCategory(ids: string[], category: string, user: User): Promise<void> {
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    ids.slice(i, i + BATCH_SIZE).forEach((id) =>
+      batch.update(doc(db, "contacts", id), {
+        category,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.email ?? user.uid,
+      })
+    );
+    await batch.commit();
+  }
 }
 
 export async function getContactsSnapshot(): Promise<Contact[]> {

@@ -2,17 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Contact, ContactCategory, CONTACT_CATEGORIES, PRESET_TAGS } from "@/lib/types";
-import { listenToContacts, listenToCategories, deleteContact } from "@/lib/contacts-firestore";
+import { listenToContacts, listenToCategories, deleteContact, bulkDeleteContacts, bulkAddTags, bulkSetCategory } from "@/lib/contacts-firestore";
 import { exportContactsToCSV, exportContactsToXLSX } from "@/lib/export";
+import { useAuth } from "@/lib/auth-context";
 import ContactCard from "@/components/ContactCard";
 import ContactFilterPanel from "@/components/ContactFilterPanel";
 import ContactModal from "@/components/ContactModal";
 import ImportContactsModal from "@/components/ImportContactsModal";
+import BulkActionsBar from "@/components/BulkActionsBar";
 
 export default function GabineteVirtualPage() {
+  const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+  // Selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Filter state
   const [searchText, setSearchText] = useState("");
@@ -75,6 +82,53 @@ export default function GabineteVirtualPage() {
     setSelectedCity("");
   }
 
+  function enterSelectionMode() {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  }
+
+  function exitSelectionMode() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(filteredContacts.map((c) => c.id)));
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (!confirm(`Excluir ${ids.length} contato${ids.length !== 1 ? "s" : ""}? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await bulkDeleteContacts(ids);
+      exitSelectionMode();
+    } catch {
+      alert("Erro ao excluir contatos.");
+    }
+  }
+
+  async function handleBulkAddTags(tags: string[]) {
+    if (!user) return;
+    await bulkAddTags(Array.from(selectedIds), tags, user);
+  }
+
+  async function handleBulkSetCategory(category: string) {
+    if (!user) return;
+    await bulkSetCategory(Array.from(selectedIds), category, user);
+  }
+
   async function handleDelete(contact: Contact) {
     if (!confirm(`Excluir o contato "${contact.name}"?`)) return;
     try {
@@ -128,6 +182,21 @@ export default function GabineteVirtualPage() {
                 !
               </span>
             )}
+          </button>
+
+          {/* Selection mode toggle */}
+          <button
+            onClick={selectionMode ? exitSelectionMode : enterSelectionMode}
+            className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border transition ${
+              selectionMode
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-400"
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {selectionMode ? "Selecionando" : "Selecionar"}
           </button>
 
           {/* Action buttons */}
@@ -279,6 +348,9 @@ export default function GabineteVirtualPage() {
                     contact={contact}
                     onEdit={() => openEdit(contact)}
                     onDelete={() => handleDelete(contact)}
+                    selectionMode={selectionMode}
+                    selected={selectedIds.has(contact.id)}
+                    onToggleSelect={() => toggleSelect(contact.id)}
                   />
                 ))}
               </div>
@@ -298,6 +370,22 @@ export default function GabineteVirtualPage() {
       )}
       {importOpen && (
         <ImportContactsModal onClose={() => setImportOpen(false)} />
+      )}
+
+      {selectionMode && (
+        <BulkActionsBar
+          selectedCount={selectedIds.size}
+          totalCount={filteredContacts.length}
+          allSelected={selectedIds.size === filteredContacts.length && filteredContacts.length > 0}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onAddTags={handleBulkAddTags}
+          onChangeCategory={handleBulkSetCategory}
+          onDelete={handleBulkDelete}
+          onCancel={exitSelectionMode}
+          allTags={allTags}
+          allCategories={allCategories}
+        />
       )}
     </div>
   );

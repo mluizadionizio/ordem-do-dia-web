@@ -18,13 +18,36 @@ interface Props {
   contact: Contact;
   onEdit: () => void;
   onDelete: () => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-export default function ContactCard({ contact, onEdit, onDelete }: Props) {
+export default function ContactCard({ contact, onEdit, onDelete, selectionMode, selected, onToggleSelect }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition p-4">
+    <div
+      className={`bg-white rounded-xl shadow-sm border transition p-4 ${
+        selectionMode
+          ? selected
+            ? "border-red-500 ring-2 ring-red-300 shadow-md cursor-pointer"
+            : "border-gray-200 hover:border-red-300 cursor-pointer"
+          : "border-gray-200 hover:shadow-md"
+      }`}
+      onClick={selectionMode ? onToggleSelect : undefined}
+    >
       {/* Header row */}
       <div className="flex items-start gap-3">
+        {selectionMode && (
+          <div className="flex-shrink-0 pt-0.5">
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggleSelect}
+              onClick={(e) => e.stopPropagation()}
+              className="w-4 h-4 accent-red-700 cursor-pointer"
+            />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight">{contact.name}</h3>
@@ -39,8 +62,8 @@ export default function ContactCard({ contact, onEdit, onDelete }: Props) {
         {/* Action buttons */}
         <div className="flex gap-1 flex-shrink-0">
           <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className={`p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition ${selectionMode ? "hidden" : ""}`}
             title="Editar"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
@@ -48,8 +71,8 @@ export default function ContactCard({ contact, onEdit, onDelete }: Props) {
             </svg>
           </button>
           <button
-            onClick={onDelete}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className={`p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition ${selectionMode ? "hidden" : ""}`}
             title="Excluir"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
